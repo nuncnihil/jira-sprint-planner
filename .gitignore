@@ -1,0 +1,27 @@
+# Jira credentials and configuration
+jira.env
+
+# Node modules
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sprint planner server data
+sprint-planner/server/.data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Internal documentation (not for public GitHub)
+docs/project-lifecycle/
+docs/progress-reviews/
