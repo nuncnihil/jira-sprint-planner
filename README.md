@@ -1,10 +1,22 @@
 # Jira Sprint Planning Tool
 
-**If your sprint isn’t predominantly focused on its goal, it’s already wrong before you start.**
+**If your sprint isn’t predominantly focused on its goal, it’s already wrong before you write a line of code.**
 
-This Jira-based sprint planning tool helps teams build sprints around a clear goal, not just a list of issues. Work is planned through a dedicated, local-first UX that removes Jira Cloud latency and forces every issue to be explicitly marked as contributing to the sprint goal or not.
+**This is a local-first sprint planning UI for Jira that makes sprint goals visible — and planning fast.**
 
-As the sprint is shaped, the tool shows a live capacity breakdown — making it immediately visible what percentage of the sprint actually serves the goal.
+Jira is not optimised for shaping a sprint around a goal.  
+It does not make it easy to see whether your sprint actually serves a clear goal.  
+And when planning sessions involve constant Jira manipulation, Jira’s performance often gets in the way of real collaboration.
+
+This tool fixes both problems.
+
+Jira Sprint Planner lets you load a snapshot of your backlog locally, plan at full speed, and explicitly categorise work by intent:
+
+- 🎯 **Sprint Goal** – work that directly serves the sprint’s objective  
+- 🛠 **Engineering Excellence** – necessary foundational or quality work  
+- 📦 **Other** – everything else
+
+As you plan, you get real-time capacity breakdowns showing how much of your sprint is actually aligned to the goal — so you can see when your sprint is “full” but strategically diluted.
 
 ## ✨ Features
 
