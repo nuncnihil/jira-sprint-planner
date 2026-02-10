@@ -79,12 +79,14 @@ npm run dev
 ```bash
 # Quick start (both server and client)
 npm run dev
+# Server: http://localhost:3001
+# Client: http://localhost:5173
 
 # Or manually:
-# Terminal 1 - Start server
+# Terminal 1 - Start server (http://localhost:3001)
 cd sprint-planner/server && npm start
 
-# Terminal 2 - Start client
+# Terminal 2 - Start client (http://localhost:5173)
 cd sprint-planner/client && npm run dev
 ```
 
@@ -168,19 +170,24 @@ cd sprint-planner/client && npm run build
 ## 🧪 Tests
 
 ```bash
-# Run all tests
+# Run server tests
 cd sprint-planner/server
 npm test
 
-# Run specific test suites
+# Run client tests
+cd sprint-planner/client
+npm test
+
+# Run specific server test suites
+cd sprint-planner/server
 npm run test:unit      # Unit tests only
 npm run test:integration  # Integration tests
 npm run test:e2e       # End-to-end tests
 ```
 
-- **142+ unit tests** covering business logic and utilities
+- **146 total tests** (72 server + 74 client)
+- **Comprehensive coverage** of business logic, utilities, and critical paths
 - **System tests** validating end-to-end Jira integration
-- **Comprehensive coverage** of critical paths
 
 See [Testing Guide](docs/testing/TESTING.md) for detailed test documentation.
 
