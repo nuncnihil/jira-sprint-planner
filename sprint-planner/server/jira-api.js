@@ -34,7 +34,8 @@ async function getSprints(boardId) {
     name: sprint.name,
     state: sprint.state,
     startDate: sprint.startDate || null,
-    endDate: sprint.endDate || null
+    endDate: sprint.endDate || null,
+    goal: sprint.goal || ''
   }));
 }
 
@@ -235,6 +236,22 @@ async function addIssuesToSprint(sprintId, issueKeys) {
 }
 
 /**
+ * Update sprint goal
+ * @param {number} sprintId - Sprint ID
+ * @param {string} goal - Sprint goal text
+ * @param {string} name - Sprint name (required by Jira)
+ * @param {string} state - Sprint state (required by Jira)
+ * @returns {Promise<void>}
+ */
+async function updateSprintGoal(sprintId, goal, name, state) {
+  await jira.request('PUT', `/rest/agile/1.0/sprint/${sprintId}`, {
+    name: name,
+    state: state,
+    goal: goal
+  });
+}
+
+/**
  * Delete an issue
  * @param {string} issueKey - Issue key to delete
  * @returns {Promise<void>}
@@ -278,6 +295,7 @@ module.exports = {
   getIssueUpdated,
   createIssue,
   addIssuesToSprint,
+  updateSprintGoal,
   deleteIssue,
   getProject,
   getCustomFieldIds

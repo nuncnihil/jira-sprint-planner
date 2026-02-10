@@ -221,7 +221,30 @@ app.post('/api/changes/save', async (req, res) => {
   }
 });
 
-app.listen(SERVER_PORT, () => {
+// POST /api/sprint/goal - Update sprint goal
+app.post('/api/sprint/goal', async (req, res) => {
+  try {
+    const { sprintId, goal, name, state } = req.body;
+    
+    if (!sprintId || !name || !state) {
+      return res.status(400).json({ error: 'sprintId, name, and state are required' });
+    }
+    
+    logger.info(`Updating sprint ${sprintId} goal`);
+    await jiraApi.updateSprintGoal(sprintId, goal || '', name, state);
+    logger.info(`✅ Updated sprint ${sprintId} goal`);
+    
+    res.json({ success: true });
+  } catch (error) {
+    logger.error('Error updating sprint goal:', error);
+    res.status(500).json({
+      error: 'Failed to update sprint goal',
+      message: error.message
+    });
+  }
+});
+
+app.listen(SERVER_PORT,"127.0.0.1", () => {
   logger.info(`Server running on http://localhost:${SERVER_PORT}`);
 });
 

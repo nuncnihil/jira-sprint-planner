@@ -84,7 +84,8 @@ describe('jira-api.js - Jira API Functions', () => {
         name: 'Sprint 1',
         state: 'active',
         startDate: '2026-01-01T10:00:00.000Z',
-        endDate: '2026-01-14T10:00:00.000Z'
+        endDate: '2026-01-14T10:00:00.000Z',
+        goal: ''
       });
     });
     

@@ -16,6 +16,7 @@ import {
 
 function PlanningView({ snapshot, selectedSprintId }) {
   const [sprintGoal, setSprintGoal] = useState('');
+  const [savedSprintGoal, setSavedSprintGoal] = useState(''); // Track last saved goal
   const [capacity, setCapacity] = useState(DEFAULT_CAPACITY);
   const [activeTab, setActiveTab] = useState('sprints');
   const [localSnapshot, setLocalSnapshot] = useState(snapshot);
@@ -31,6 +32,23 @@ function PlanningView({ snapshot, selectedSprintId }) {
   useEffect(() => {
     setLocalSnapshot(snapshot);
   }, [snapshot]);
+
+  // Load sprint goal when selected sprint or snapshot changes
+  useEffect(() => {
+    const selectedSprint = localSnapshot.sprints.find(s => s.id === selectedSprintId);
+    if (selectedSprint) {
+      const goal = selectedSprint.goal || '';
+      setSprintGoal(goal);
+    }
+  }, [localSnapshot.sprints, selectedSprintId]);
+  
+  // Initialize savedSprintGoal only when switching sprints (not on every localSnapshot change)
+  useEffect(() => {
+    const selectedSprint = snapshot.sprints.find(s => s.id === selectedSprintId);
+    if (selectedSprint) {
+      setSavedSprintGoal(selectedSprint.goal || '');
+    }
+  }, [selectedSprintId, snapshot.sprints]); // Use original snapshot, not localSnapshot
 
   if (!localSnapshot) {
     return <div>No snapshot loaded</div>;
@@ -171,41 +189,86 @@ function PlanningView({ snapshot, selectedSprintId }) {
     setSaveMessage('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/changes/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pendingChanges })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        const { saved = [], conflicts = [], errors = [] } = data;
-        const total = saved.length + conflicts.length + errors.length;
+      // Save sprint goal if changed
+      let goalSaveSuccess = true;
+      if (sprintGoalChanged) {
+        const selectedSprint = localSnapshot.sprints.find(s => s.id === selectedSprintId);
+        const goalResponse = await fetch('http://localhost:3001/api/sprint/goal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            sprintId: selectedSprintId, 
+            goal: sprintGoal,
+            name: selectedSprint.name,
+            state: selectedSprint.state
+          })
+        });
         
-        if (conflicts.length > 0 || errors.length > 0) {
-          // Partial success/failure
+        if (!goalResponse.ok) {
+          const goalData = await goalResponse.json();
           setSaveStatus('error');
-          const messages = [];
-          if (saved.length > 0) messages.push(`${saved.length} saved`);
-          if (conflicts.length > 0) messages.push(`${conflicts.length} conflicts`);
-          if (errors.length > 0) messages.push(`${errors.length} errors`);
-          setSaveMessage(messages.join(', '));
-        } else {
-          // Full success
-          setSaveStatus('success');
-          setSaveMessage(`All ${saved.length} changes saved successfully!`);
-          setPendingChanges([]); // Clear pending changes
-          
-          // Hide success message after 2 seconds
-          setTimeout(() => {
-            setSaveStatus('idle');
-            setSaveMessage('');
-          }, 2000);
+          setSaveMessage(`Failed to save sprint goal: ${goalData.error || 'Unknown error'}`);
+          return;
         }
-      } else {
+      }
+
+      // Save issue changes only if there are any
+      let saved = [], conflicts = [], errors = [];
+      if (pendingChanges.length > 0) {
+        const response = await fetch('http://localhost:3001/api/changes/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pendingChanges })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setSaveStatus('error');
+          setSaveMessage(data.error || 'Failed to save changes');
+          return;
+        }
+        
+        saved = data.saved || [];
+        conflicts = data.conflicts || [];
+        errors = data.errors || [];
+      }
+      
+      // Handle results
+      if (conflicts.length > 0 || errors.length > 0) {
+        // Partial success/failure
         setSaveStatus('error');
-        setSaveMessage(data.error || 'Failed to save changes');
+        const messages = [];
+        if (saved.length > 0) messages.push(`${saved.length} saved`);
+        if (conflicts.length > 0) messages.push(`${conflicts.length} conflicts`);
+        if (errors.length > 0) messages.push(`${errors.length} errors`);
+        setSaveMessage(messages.join(', '));
+      } else {
+        // Full success
+        setSaveStatus('success');
+        const savedItems = [];
+        if (saved.length > 0) savedItems.push(`${saved.length} issue${saved.length !== 1 ? 's' : ''}`);
+        if (sprintGoalChanged) savedItems.push('sprint goal');
+        setSaveMessage(`Saved ${savedItems.join(' and ')} successfully!`);
+        setPendingChanges([]); // Clear pending changes
+        
+        // Update saved sprint goal and localSnapshot to current value
+        if (sprintGoalChanged) {
+          setSavedSprintGoal(sprintGoal);
+          // Update localSnapshot to reflect saved goal
+          const updatedSprints = localSnapshot.sprints.map(sprint => 
+            sprint.id === selectedSprintId 
+              ? { ...sprint, goal: sprintGoal }
+              : sprint
+          );
+          setLocalSnapshot({ ...localSnapshot, sprints: updatedSprints });
+        }
+        
+        // Hide success message after 2 seconds
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setSaveMessage('');
+        }, 2000);
       }
     } catch (error) {
       setSaveStatus('error');
@@ -219,9 +282,27 @@ function PlanningView({ snapshot, selectedSprintId }) {
     setLocalSnapshot(snapshot); // Reset to original snapshot
     setSaveStatus('idle');
     setSaveMessage('');
+    // Reset sprint goal to last saved value
+    setSprintGoal(savedSprintGoal);
+  };
+
+  // Handle sprint goal change
+  const handleSprintGoalChange = (newGoal) => {
+    setSprintGoal(newGoal);
+    // Update the sprint in local snapshot so it persists across other operations
+    const updatedSprints = localSnapshot.sprints.map(sprint => 
+      sprint.id === selectedSprintId 
+        ? { ...sprint, goal: newGoal }
+        : sprint
+    );
+    setLocalSnapshot({ ...localSnapshot, sprints: updatedSprints });
   };
 
   const totalIssues = localSnapshot.sprints.reduce((sum, s) => sum + s.issues.length, 0) + localSnapshot.backlog.length;
+
+  // Check if sprint goal has changed
+  const sprintGoalChanged = sprintGoal !== savedSprintGoal;
+  const hasUnsavedChanges = pendingChanges.length > 0 || sprintGoalChanged;
 
   // Calculate category stats for selected sprint (memoized)
   const categoryStats = useMemo(() => {
@@ -287,7 +368,7 @@ function PlanningView({ snapshot, selectedSprintId }) {
           }}>Sprint Goal:</label>
           <textarea
             value={sprintGoal}
-            onChange={(e) => setSprintGoal(e.target.value)}
+            onChange={(e) => handleSprintGoalChange(e.target.value)}
             placeholder="Enter sprint goal..."
             rows={SPRINT_GOAL_ROWS}
             style={{
@@ -507,7 +588,7 @@ function PlanningView({ snapshot, selectedSprintId }) {
       )}
 
       {/* Save Bar (Bottom Right) */}
-      {pendingChanges.length > 0 && (
+      {(hasUnsavedChanges || saveStatus !== 'idle') && (
         <div style={{
           position: 'fixed',
           bottom: '20px',
@@ -539,7 +620,12 @@ function PlanningView({ snapshot, selectedSprintId }) {
               {saveStatus === 'saving' && 'Saving changes...'}
               {saveStatus === 'success' && 'Saved!'}
               {saveStatus === 'error' && 'Error'}
-              {saveStatus === 'idle' && `${pendingChanges.length} pending change${pendingChanges.length !== 1 ? 's' : ''}`}
+              {saveStatus === 'idle' && (() => {
+                const changes = [];
+                if (pendingChanges.length > 0) changes.push(`${pendingChanges.length} issue change${pendingChanges.length !== 1 ? 's' : ''}`);
+                if (sprintGoalChanged) changes.push('sprint goal');
+                return changes.join(', ') || 'Unsaved changes';
+              })()}
             </span>
             {saveMessage && (
               <span style={{ fontSize: '12px', color: saveStatus === 'error' ? '#d32f2f' : '#666' }}>
