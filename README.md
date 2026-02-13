@@ -1,22 +1,30 @@
 # Jira Sprint Planning Tool
 
-**If your sprint isn’t predominantly focused on its goal, it’s already wrong before you write a line of code.**
+**If your sprint isn't predominantly focused on its goal, it's already wrong before you write a line of code.**
 
 **This is a local-first sprint planning UI for Jira that makes sprint goals visible — and planning fast.**
 
 Jira is not optimised for shaping a sprint around a goal.  
 It does not make it easy to see whether your sprint actually serves a clear goal.  
-And when planning sessions involve constant Jira manipulation, Jira’s performance often gets in the way of real collaboration.
+And when planning sessions involve constant Jira manipulation, Jira's performance often gets in the way of real collaboration.
 
 This tool fixes both problems.
 
+**What you get:**
+- ⚡ **Local-first planning** (no Jira UI lag)
+- 🧠 **Deterministic, explainable plans** (not black-box automation)
+- 🎯 **Goal-focused sprint composition**
+- 📊 **Capacity-aware planning**
+- 🔁 **One-step sync back to Jira** (when you choose)
+
 Jira Sprint Planner lets you load a snapshot of your backlog locally, plan at full speed, and explicitly categorise work by intent:
 
-- 🎯 **Sprint Goal** – work that directly serves the sprint’s objective  
+- 🎯 **Sprint Goal** – work that directly serves the sprint's objective  
 - 🛠 **Engineering Excellence** – necessary foundational or quality work  
 - 📦 **Other** – everything else
 
-As you plan, you get real-time capacity breakdowns showing how much of your sprint is actually aligned to the goal — so you can see when your sprint is “full” but strategically diluted.
+As you plan, you get real-time capacity breakdowns showing how much of your sprint is actually aligned to the goal — so you can see when your sprint is "full" but strategically diluted.
+
 
 ## ✨ Features
 
@@ -27,6 +35,56 @@ As you plan, you get real-time capacity breakdowns showing how much of your spri
 - **Snapshot-Based** - Load once, plan locally, sync in bulk (no Jira lag during planning)
 - **Dynamic Field Discovery** - Portable across different Jira instances and custom fields
 - **Conflict Detection** - Safe bulk updates with change conflict resolution
+
+## 🔒 Security & Permissions
+
+This tool uses the Jira API with your personal API token to:
+
+**Read operations:**
+- Board, sprint, and backlog data
+- Initiative and epic metadata
+- Issue details (summary, status, story points)
+
+**Write operations** (only when you explicitly save):
+- Sprint goal text (`PUT /rest/agile/1.0/sprint/{id}`)
+- Sprint membership (`POST /rest/agile/1.0/sprint/{id}/issue`)
+- Issue fields: epic parent, story points, custom fields
+
+**Security model:**
+- ✅ Token stored locally in `jira.env` only
+- ✅ No external servers, no telemetry, no data exfiltration
+- ✅ Open source and auditable
+- ✅ Changes only written when you click "Save"
+
+**Enterprise deployment:**
+
+If your org requires approval for Jira API write access, show your security team this section. The tool needs read access to all project data and write access to sprint planning metadata only.
+
+**Requesting Jira API Access (copy-paste to IT / Jira Admin):**
+
+```
+Hi IT / Jira Admin Team,
+
+I'm trialling an open-source sprint planning tool locally for our team.
+
+I need:
+- A Jira API token for my user
+- Read + limited write access for sprint planning metadata
+- Project scope: <PROJECT_KEY>
+
+Purpose:
+Local sprint planning and persisting sprint composition back to Jira.
+
+Security notes:
+- Tool runs locally only
+- No data is sent to external services
+- Token stored locally on my machine
+- Open-source and auditable
+
+Happy to provide repo link and list of Jira endpoints used.
+
+Thanks!
+```
 
 ## 📸 Screenshots
 
@@ -74,21 +132,7 @@ npm run dev
 
 ## 📖 Usage
 
-### Start the Application
 
-```bash
-# Quick start (both server and client)
-npm run dev
-# Server: http://localhost:3001
-# Client: http://localhost:5173
-
-# Or manually:
-# Terminal 1 - Start server (http://localhost:3001)
-cd sprint-planner/server && npm start
-
-# Terminal 2 - Start client (http://localhost:5173)
-cd sprint-planner/client && npm run dev
-```
 
 ### Basic Workflow
 
@@ -195,11 +239,7 @@ See [Testing Guide](docs/testing/TESTING.md) for detailed test documentation.
 
 This project welcomes contributions! Key areas for improvement:
 
-1. **Persistence layer** - Save changes back to Jira
-2. **Drag-and-drop** - Reorder issues, move between sprints
-3. **Bulk operations** - Epic assignment, story point estimation
-4. **Epic creation** - Create new epics from the planner
-5. **Multi-board support** - Plan across multiple boards
+PRs welcome. If you’re experimenting internally and hit friction (security, permissions, workflows), open an issue — those are the exact problems this project is meant to surface and improve.
 
 See [Installation Guide](docs/INSTALLATION.md) for development setup.
 
